@@ -8,9 +8,9 @@ import android.view.View;
 public class MainActivity extends AppCompatActivity {
 
     //最大移动距离
-    private static final float TOUCH_MOVE_MAX_Y =600;
+    private static final float TOUCH_MOVE_MAX_Y = 600;
     //竖直方向的移动距离
-    private float mTouchMoveY=0;
+    private float mTouchMoveY = 0;
     private TouchDragView mDragView;
 
     @Override
@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
      * 初始化事件
      */
     private void initView() {
-        mDragView= (TouchDragView) findViewById(R.id.touchDrag);
+        mDragView = (TouchDragView) findViewById(R.id.touchDrag);
 
         //根布局实现触碰响应
         findViewById(R.id.activity_main).setOnTouchListener(new View.OnTouchListener() {
@@ -44,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
                             //移动的距离
                             float moveSize = y - mTouchMoveY;
                             //距离移动到最大的进度
-                            float progress =moveSize>=TOUCH_MOVE_MAX_Y?1:moveSize/TOUCH_MOVE_MAX_Y;
+                            float progress = moveSize >= TOUCH_MOVE_MAX_Y ? 1 : moveSize / TOUCH_MOVE_MAX_Y;
                             mDragView.setProgress(progress);
                         }
                         break;
