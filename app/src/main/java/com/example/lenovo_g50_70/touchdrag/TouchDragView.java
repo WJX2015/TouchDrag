@@ -67,4 +67,12 @@ public class TouchDragView extends View {
         float y = getHeight() >> 1;
         canvas.drawCircle(x, y, mCircleRadius, mCirclePaint);
     }
+
+    /**
+     * 设置进度
+     * @param progress
+     */
+    public void setProgress(float progress){
+
+    }
 }

@@ -8,6 +8,7 @@
     tools:context="com.example.lenovo_g50_70.touchdrag.MainActivity">
 
     <com.example.lenovo_g50_70.touchdrag.TouchDragView
+        android:id="@+id/touchDrag"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:text="Hello World!"/>
