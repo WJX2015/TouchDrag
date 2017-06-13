@@ -8,8 +8,13 @@
     tools:context="com.example.lenovo_g50_70.touchdrag.MainActivity">
 
     <com.example.lenovo_g50_70.touchdrag.TouchDragView
+        android:visibility="gone"
         android:id="@+id/touchDrag"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Hello World!"/>
+        android:layout_height="wrap_content"/>
+
+    <com.example.lenovo_g50_70.touchdrag.Bessel
+        android:id="@+id/bessel"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 </RelativeLayout>
