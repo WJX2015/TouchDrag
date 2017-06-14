@@ -3,6 +3,7 @@ package com.example.lenovo_g50_70.touchdrag;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
 import android.util.AttributeSet;
@@ -28,6 +29,16 @@ public class TouchDragView extends View {
 
     //可拖动的高度
     private int mDragHeight = 800;
+
+    //目标宽度
+    private int mTargetWidth;
+    //贝塞尔曲线的路径和画笔
+    private Path mPath;
+    private Paint mPathPaint;
+    //重心点最终高度，决定控制点的Y坐标
+    private int mTargetGravityHeight;
+    //角度变换 0-135度
+    private int mTangentAngle = 120;
 
     public TouchDragView(Context context) {
         super(context);
@@ -65,6 +76,20 @@ public class TouchDragView extends View {
         //颜色
         paint.setColor(0xff000000);
         mCirclePaint = paint;
+
+        // 初始化贝塞尔路径和画笔
+        paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        //抗锯齿
+        paint.setAntiAlias(true);
+        //仿抖动
+        paint.setDither(true);
+        //填充样式
+        paint.setStyle(Paint.Style.FILL);
+        //颜色
+        paint.setColor(0xff000000);
+        mPathPaint = paint;
+
+        mPath = new Path();
     }
 
     @Override
@@ -115,15 +140,17 @@ public class TouchDragView extends View {
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {//当大小改变时触发
         super.onSizeChanged(w, h, oldw, oldh);
-        //中心位置
-        mCirclePointX = getWidth() >> 1;
-        mCirclePointY = getHeight() >> 1;
+        //当高度变化时，进行路径更新
+        updatePathLayout();
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        //画圆
         canvas.drawCircle(mCirclePointX, mCirclePointY, mCircleRadius, mCirclePaint);
+        //画贝塞尔曲线
+        canvas.drawPath(mPath, mPathPaint);
     }
 
     /**
@@ -136,5 +163,26 @@ public class TouchDragView extends View {
         Log.e("TouchDragView", "P:" + progress);
         //请求重新进行测量
         requestLayout();
+    }
+
+    /**
+     * 更新我们的路径等相关操作
+     */
+    private void updatePathLayout() {
+        //获取进度
+        final float progress = mProgress;
+        final Path path = mPath;
+        //重置
+        path.reset();
+    }
+
+    /**
+     * @param start    起始值
+     * @param end      结束值
+     * @param progress 进度
+     * @return 当前进度的值
+     */
+    private float getValueLine(float start, float end, float progress) {
+        return (start + (end - start)) * progress;
     }
 }
