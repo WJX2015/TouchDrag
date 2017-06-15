@@ -20,18 +20,18 @@ public class TouchDragView extends View {
     //圆的画笔
     private Paint mCirclePaint;
     //圆的半径
-    private int mCircleRadius = 100;
+    private float mCircleRadius = 100;
     //圆心XY
-    private int mCirclePointX;
-    private int mCirclePointY;
+    private float mCirclePointX;
+    private float mCirclePointY;
     //进度值
     private float mProgress;
 
     //可拖动的高度
-    private int mDragHeight = 800;
+    private int mDragHeight = 600;
 
     //目标宽度
-    private int mTargetWidth;
+    private int mTargetWidth=200;
     //贝塞尔曲线的路径和画笔
     private Path mPath;
     private Paint mPathPaint;
@@ -106,7 +106,7 @@ public class TouchDragView extends View {
         // 所需高度的最小值 因为要四舍五入，所以加上0.5f
         int minHeight = (int) ((mDragHeight * mProgress + 0.5f) + getPaddingLeft() + getPaddingRight());
         //所需宽度的最小值
-        int minWidth = 2 * mCircleRadius + getPaddingTop() + getPaddingBottom();
+        int minWidth = (int) (2 * mCircleRadius + getPaddingTop() + getPaddingBottom());
 
         //测量出的宽度
         int measureWidth;
@@ -147,10 +147,19 @@ public class TouchDragView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+
+        //基础坐标参数系改变
+        int count =canvas.save();
+        float tranX =(getWidth()-getValueLine(getWidth(),mTargetWidth,mProgress))/2;
+        canvas.translate(tranX,0);
+
         //画圆
         canvas.drawCircle(mCirclePointX, mCirclePointY, mCircleRadius, mCirclePaint);
         //画贝塞尔曲线
         canvas.drawPath(mPath, mPathPaint);
+
+        //画布复位
+        canvas.restoreToCount(count);
     }
 
     /**
@@ -166,17 +175,64 @@ public class TouchDragView extends View {
     }
 
     /**
+     * 黏性下拉效果
      * 更新我们的路径等相关操作
      */
     private void updatePathLayout() {
         //获取进度
         final float progress = mProgress;
+
+        //获取可绘制区域高度宽度
+        final float w = getValueLine(getWidth(), mTargetWidth, progress);
+        final float h = getValueLine(0, mDragHeight, progress);
+        //X对称轴的参数，圆心的 X坐标
+        final float cPointx=w/2.0f;
+        //圆的半径
+        final float cRadius =mCircleRadius;
+        //圆心的Y坐标
+        final float cPointy =h-cRadius;
+        //控制点结束Y的值
+        final float endContrloY =mTargetGravityHeight;
+        //更新圆的坐标
+        mCirclePointX =cPointx;
+
         final Path path = mPath;
-        //重置
+        //复位操作
         path.reset();
+        path.moveTo(0,0);
+
+        //左边部分结束点和控制点
+        float leftEndPointX,leftEndPointY;
+        float leftContrloPointX,leftControlPointY;
+
+        //获取当前切线的弧度
+        double radian =Math.toRadians(getValueLine(0,mTangentAngle,progress));
+        float x= (float) (Math.sin(radian)*cRadius);
+        float y= (float) (Math.cos(radian)*cRadius);
+
+        leftEndPointX=cPointx-x;
+        leftEndPointY=cPointy-y;
+
+        //控制点的Y坐标变化
+        leftControlPointY=getValueLine(0,endContrloY,progress);
+        //控制点与结束点之间的高度
+        float tHeight = leftControlPointY-leftControlPointY;
+        //控制点与X的坐标距离
+        float tWidth = (float) (tHeight/Math.tan(radian));
+        leftContrloPointX=leftEndPointX-tWidth;
+
+        //左边贝塞尔曲线
+        path.quadTo(leftContrloPointX,leftControlPointY,leftEndPointX,leftEndPointY);
+        //链接到右边
+        path.lineTo(cPointx+(cPointx-leftEndPointX),leftEndPointY);
+        //右边贝塞尔曲线
+        path.quadTo(cPointx+cPointx-leftContrloPointX,leftControlPointY,w,0);
+
     }
 
     /**
+     * 黏性下拉效果
+     *
      * @param start    起始值
      * @param end      结束值
      * @param progress 进度
