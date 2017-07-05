@@ -20,7 +20,7 @@ public class TouchDragView extends View {
     //圆的画笔
     private Paint mCirclePaint;
     //圆的半径
-    private float mCircleRadius = 100;
+    private float mCircleRadius = 40;
     //圆心XY
     private float mCirclePointX;
     private float mCirclePointY;
@@ -31,7 +31,7 @@ public class TouchDragView extends View {
     private int mDragHeight = 600;
 
     //目标宽度
-    private int mTargetWidth=200;
+    private int mTargetWidth = 200;
     //贝塞尔曲线的路径和画笔
     private Path mPath;
     private Paint mPathPaint;
@@ -149,9 +149,9 @@ public class TouchDragView extends View {
         super.onDraw(canvas);
 
         //基础坐标参数系改变
-        int count =canvas.save();
-        float tranX =(getWidth()-getValueLine(getWidth(),mTargetWidth,mProgress))/2;
-        canvas.translate(tranX,0);
+        int count = canvas.save();
+        float tranX = (getWidth() - getValueLine(getWidth(), mTargetWidth, mProgress)) / 2;
+        canvas.translate(tranX, 0);
 
         //画圆
         canvas.drawCircle(mCirclePointX, mCirclePointY, mCircleRadius, mCirclePaint);
@@ -185,48 +185,49 @@ public class TouchDragView extends View {
         //获取可绘制区域高度宽度
         final float w = getValueLine(getWidth(), mTargetWidth, progress);
         final float h = getValueLine(0, mDragHeight, progress);
-        //X对称轴的参数，圆心的 X坐标
-        final float cPointx=w/2.0f;
+        //X对称轴的参数，圆心的X坐标
+        final float cPointx = w / 2.0f;
         //圆的半径
-        final float cRadius =mCircleRadius;
+        final float cRadius = mCircleRadius;
         //圆心的Y坐标
-        final float cPointy =h-cRadius;
+        final float cPointy = h - cRadius;
         //控制点结束Y的值
-        final float endContrloY =mTargetGravityHeight;
+        final float endContrloY = mTargetGravityHeight;
         //更新圆的坐标
-        mCirclePointX =cPointx;
+        mCirclePointX = cPointx;
+        mCirclePointY = cPointy;
 
         final Path path = mPath;
         //复位操作
         path.reset();
-        path.moveTo(0,0);
+        path.moveTo(0, 0);
 
         //左边部分结束点和控制点
-        float leftEndPointX,leftEndPointY;
-        float leftContrloPointX,leftControlPointY;
+        float leftEndPointX, leftEndPointY;
+        float leftContrloPointX, leftControlPointY;
 
         //获取当前切线的弧度
-        double radian =Math.toRadians(getValueLine(0,mTangentAngle,progress));
-        float x= (float) (Math.sin(radian)*cRadius);
-        float y= (float) (Math.cos(radian)*cRadius);
+        double radian = Math.toRadians(getValueLine(0, mTangentAngle, progress));
+        float x = (float) (Math.sin(radian) * cRadius);
+        float y = (float) (Math.cos(radian) * cRadius);
 
-        leftEndPointX=cPointx-x;
-        leftEndPointY=cPointy-y;
+        leftEndPointX = cPointx - x;
+        leftEndPointY = cPointy + y;
 
         //控制点的Y坐标变化
-        leftControlPointY=getValueLine(0,endContrloY,progress);
+        leftControlPointY = getValueLine(0, endContrloY, progress);
         //控制点与结束点之间的高度
-        float tHeight = leftControlPointY-leftControlPointY;
+        float tHeight = leftControlPointY - leftControlPointY;
         //控制点与X的坐标距离
-        float tWidth = (float) (tHeight/Math.tan(radian));
-        leftContrloPointX=leftEndPointX-tWidth;
+        float tWidth = (float) (tHeight / Math.tan(radian));
+        leftContrloPointX = leftEndPointX - tWidth;
 
         //左边贝塞尔曲线
-        path.quadTo(leftContrloPointX,leftControlPointY,leftEndPointX,leftEndPointY);
+        path.quadTo(leftContrloPointX, leftControlPointY, leftEndPointX, leftEndPointY);
         //链接到右边
-        path.lineTo(cPointx+(cPointx-leftEndPointX),leftEndPointY);
+        path.lineTo(cPointx + (cPointx - leftEndPointX), leftEndPointY);
         //右边贝塞尔曲线
-        path.quadTo(cPointx+cPointx-leftContrloPointX,leftControlPointY,w,0);
+        path.quadTo(cPointx + cPointx - leftContrloPointX, leftControlPointY, w, 0);
 
     }
 
@@ -239,6 +240,6 @@ public class TouchDragView extends View {
      * @return 当前进度的值
      */
     private float getValueLine(float start, float end, float progress) {
-        return (start + (end - start)) * progress;
+        return start + (end - start) * progress;
     }
 }
