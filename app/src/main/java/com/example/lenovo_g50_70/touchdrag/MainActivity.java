@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                         break;
                     case MotionEvent.ACTION_UP:
+                        mDragView.release();
                         break;
                 }
                 return true;

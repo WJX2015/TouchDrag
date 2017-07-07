@@ -1,14 +1,20 @@
 package com.example.lenovo_g50_70.touchdrag;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
+import android.support.v4.view.animation.PathInterpolatorCompat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.Interpolator;
 
 /**
  * 触碰拖拽效果
@@ -20,7 +26,7 @@ public class TouchDragView extends View {
     //圆的画笔
     private Paint mCirclePaint;
     //圆的半径
-    private float mCircleRadius = 40;
+    private float mCircleRadius = 50;
     //圆心XY
     private float mCirclePointX;
     private float mCirclePointY;
@@ -28,43 +34,53 @@ public class TouchDragView extends View {
     private float mProgress;
 
     //可拖动的高度
-    private int mDragHeight = 600;
+    private int mDragHeight = 300;
 
     //目标宽度
-    private int mTargetWidth = 200;
+    private int mTargetWidth = 400;
     //贝塞尔曲线的路径和画笔
     private Path mPath;
     private Paint mPathPaint;
     //重心点最终高度，决定控制点的Y坐标
-    private int mTargetGravityHeight;
+    private int mTargetGravityHeight = 10;
     //角度变换 0-135度
-    private int mTangentAngle = 120;
+    private int mTangentAngle = 105;
+
+    private Interpolator mProgressInterpolator = new DecelerateInterpolator();
+    private Interpolator mTanentAngleInterpolator;
+
+    private Drawable mContent = null;
+    private int mContentMargin = 0;
+    private int mColor;
 
     public TouchDragView(Context context) {
         super(context);
-        init();
+        init(null);
     }
 
     public TouchDragView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init();
+        init(attrs);
     }
 
     public TouchDragView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init();
+        init(attrs);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public TouchDragView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
-        init();
+        init(attrs);
     }
 
     /**
      * 初始化操作
      */
-    private void init() {
+    private void init(AttributeSet attrs) {
+
+        getAttributes(attrs);
+
         //设置默认字体，黑体
         Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         //抗锯齿
@@ -74,7 +90,7 @@ public class TouchDragView extends View {
         //填充样式
         paint.setStyle(Paint.Style.FILL);
         //颜色
-        paint.setColor(0xff000000);
+        paint.setColor(mColor);
         mCirclePaint = paint;
 
         // 初始化贝塞尔路径和画笔
@@ -86,10 +102,27 @@ public class TouchDragView extends View {
         //填充样式
         paint.setStyle(Paint.Style.FILL);
         //颜色
-        paint.setColor(0xff000000);
+        paint.setColor(mColor);
         mPathPaint = paint;
 
         mPath = new Path();
+
+        //切角路径插值器
+        mTanentAngleInterpolator = PathInterpolatorCompat.create(mCircleRadius * 2.0f / mDragHeight, 90.0f / mTangentAngle);
+    }
+
+    private void getAttributes(AttributeSet attrs) {
+        final Context context = getContext();
+        TypedArray array = context.obtainStyledAttributes(attrs, R.styleable.TouchDragView, 0, 0);
+        mColor = array.getColor(R.styleable.TouchDragView_dragColor, 0x20000000);
+        mCircleRadius = array.getDimension(R.styleable.TouchDragView_dragRadius, mCircleRadius);
+        mDragHeight = array.getDimensionPixelSize(R.styleable.TouchDragView_dragDragHeight, mDragHeight);
+        mTangentAngle = array.getInteger(R.styleable.TouchDragView_dragTangentAngle, 100);
+        mTargetWidth = array.getDimensionPixelOffset(R.styleable.TouchDragView_dragTargetWidth, mTargetWidth);
+        mTargetGravityHeight = array.getDimensionPixelOffset(R.styleable.TouchDragView_dragTargetGravityHeight, mTargetGravityHeight);
+        mContent = array.getDrawable(R.styleable.TouchDragView_dragContentDrawable);
+        mContentMargin = array.getDimensionPixelOffset(R.styleable.TouchDragView_dragContentDrawableMargin, 0);
+        array.recycle();
     }
 
     @Override
@@ -104,9 +137,9 @@ public class TouchDragView extends View {
         int height = MeasureSpec.getSize(heightMeasureSpec);
 
         // 所需高度的最小值 因为要四舍五入，所以加上0.5f
-        int minHeight = (int) ((mDragHeight * mProgress + 0.5f) + getPaddingLeft() + getPaddingRight());
+        int minHeight = (int) ((mDragHeight * mProgress + 0.5f) + getPaddingTop() + getPaddingBottom());
         //所需宽度的最小值
-        int minWidth = (int) (2 * mCircleRadius + getPaddingTop() + getPaddingBottom());
+        int minWidth = (int) (2 * mCircleRadius + getPaddingLeft() + getPaddingRight());
 
         //测量出的宽度
         int measureWidth;
@@ -137,6 +170,25 @@ public class TouchDragView extends View {
         setMeasuredDimension(measureWidth, measureHeight);
     }
 
+    /**
+     * 对内容部分测量并设置
+     *
+     * @param cx     圆心X
+     * @param cy     圆心Y
+     * @param radius 圆半径
+     */
+    private void updateContentLayout(float cx, float cy, float radius) {
+        Drawable drawable = mContent;
+        if (drawable != null) {
+            int margin = mContentMargin;
+            int left = (int) (cx - radius + margin);
+            int right = (int) (cx + radius - margin);
+            int top = (int) (cy - radius + margin);
+            int bottom = (int) (cy + radius - margin);
+            drawable.setBounds(left, top, right, bottom);
+        }
+    }
+
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {//当大小改变时触发
         super.onSizeChanged(w, h, oldw, oldh);
@@ -155,6 +207,17 @@ public class TouchDragView extends View {
 
         //画圆
         canvas.drawCircle(mCirclePointX, mCirclePointY, mCircleRadius, mCirclePaint);
+
+        Drawable drawable = mContent;
+        if (drawable != null) {
+            canvas.save();
+            //剪切矩形区域
+            canvas.clipRect(drawable.getBounds());
+            //绘制Drawable
+            drawable.draw(canvas);
+            canvas.restore();
+        }
+
         //画贝塞尔曲线
         canvas.drawPath(mPath, mPathPaint);
 
@@ -180,11 +243,11 @@ public class TouchDragView extends View {
      */
     private void updatePathLayout() {
         //获取进度
-        final float progress = mProgress;
+        final float progress = mProgressInterpolator.getInterpolation(mProgress);
 
         //获取可绘制区域高度宽度
-        final float w = getValueLine(getWidth(), mTargetWidth, progress);
-        final float h = getValueLine(0, mDragHeight, progress);
+        final float w = getValueLine(getWidth(), mTargetWidth, mProgress);
+        final float h = getValueLine(0, mDragHeight, mProgress);
         //X对称轴的参数，圆心的X坐标
         final float cPointx = w / 2.0f;
         //圆的半径
@@ -207,7 +270,8 @@ public class TouchDragView extends View {
         float leftContrloPointX, leftControlPointY;
 
         //获取当前切线的弧度
-        double radian = Math.toRadians(getValueLine(0, mTangentAngle, progress));
+        float angle = mTangentAngle * mTanentAngleInterpolator.getInterpolation(progress);
+        double radian = Math.toRadians(angle);
         float x = (float) (Math.sin(radian) * cRadius);
         float y = (float) (Math.cos(radian) * cRadius);
 
@@ -217,7 +281,7 @@ public class TouchDragView extends View {
         //控制点的Y坐标变化
         leftControlPointY = getValueLine(0, endContrloY, progress);
         //控制点与结束点之间的高度
-        float tHeight = leftControlPointY - leftControlPointY;
+        float tHeight = leftEndPointY - leftControlPointY;
         //控制点与X的坐标距离
         float tWidth = (float) (tHeight / Math.tan(radian));
         leftContrloPointX = leftEndPointX - tWidth;
@@ -229,6 +293,8 @@ public class TouchDragView extends View {
         //右边贝塞尔曲线
         path.quadTo(cPointx + cPointx - leftContrloPointX, leftControlPointY, w, 0);
 
+        //更新内容部分Drawable
+        updateContentLayout(cPointx, cPointy, cRadius);
     }
 
     /**
@@ -241,5 +307,30 @@ public class TouchDragView extends View {
      */
     private float getValueLine(float start, float end, float progress) {
         return start + (end - start) * progress;
+    }
+
+    //释放动画
+    private ValueAnimator mValueAnimator;
+
+    public void release() {
+        if (mValueAnimator == null) {
+            ValueAnimator animator = ValueAnimator.ofFloat(mProgress, 0f);
+            animator.setInterpolator(new DecelerateInterpolator());
+            animator.setDuration(400);
+            animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator animation) {
+                    Object value = animation.getAnimatedValue();
+                    if (value instanceof Float) {
+                        setProgress((Float) value);
+                    }
+                }
+            });
+            mValueAnimator = animator;
+        } else {
+            mValueAnimator.cancel();
+            mValueAnimator.setFloatValues(mProgress, 0f);
+        }
+        mValueAnimator.start();
     }
 }

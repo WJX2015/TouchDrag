@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="TouchDragView">
+        <attr name="dragColor" format="color"/>
+        <attr name="dragRadius" format="dimension"/>
+        <attr name="dragDragHeight" format="dimension"/>
+        <attr name="dragTangentAngle" format="integer"/>
+        <attr name="dragTargetWidth" format="dimension"/>
+        <attr name="dragTargetGravityHeight" format="dimension"/>
+        <attr name="dragContentDrawable" format="reference"/>
+        <attr name="dragContentDrawableMargin" format="dimension"/>
+    </declare-styleable>
+</resources>

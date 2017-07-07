@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_main"
     android:layout_width="match_parent"
@@ -10,11 +11,19 @@
     <com.example.lenovo_g50_70.touchdrag.TouchDragView
         android:id="@+id/touchDrag"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        app:dragColor="@color/colorAccent"
+        app:dragContentDrawable="@drawable/ic_draw_circle"
+        app:dragContentDrawableMargin="2dp"
+        app:dragDragHeight="100dp"
+        app:dragRadius="25dp"
+        app:dragTangentAngle="110"
+        app:dragTargetGravityHeight="4dp"
+        app:dragTargetWidth="200dp"/>
 
     <com.example.lenovo_g50_70.touchdrag.Bessel
         android:id="@+id/bessel"
-        android:visibility="gone"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        android:visibility="gone"/>
 </RelativeLayout>
